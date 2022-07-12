@@ -1,3 +1,42 @@
+class App {
+
+    static SweetAlert = class {
+
+        static showAlertSuccess(t) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: t,
+                showConfirmButton: false,
+                timer: 2500
+            })
+        }
+
+        static showAlertError(t) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'error',
+                title: t,
+                showConfirmButton: false,
+                timer: 2500
+            })
+        }
+
+        static showConfirmDelete() {
+            return Swal.fire({
+                title: 'Are you sure to deactive the selected customer ?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, deactive it!'
+            });
+        }
+
+    }
+}
+
+
 class Customer {
     constructor(id, fullName, email, phone, address, balance = 0, deleted = 0) {
         this.id = id;

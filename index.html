@@ -6,16 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Index</title>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/sweetalert/v2/sweetalert2.min.css">
 </head>
 <body>
     <div class="container">
         <h1>Customer information</h1>
 
-        <form>
+        <form id="frmCreate">
             <div class="row">
                 <div class="col-lg-6">
-                    <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" class="form-control">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" class="form-control">
                 </div>
                 <div class="col-lg-6">
                     <label for="email">Email</label>
@@ -51,29 +52,60 @@
                         <th>Phone</th>
                         <th>Address</th>
                         <th>Balance</th>
-                        <th>Action</th>
+                        <th class="text-center" colspan="2">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- <tr>
-                        <td>1</td>
-                        <td>NVA</td>
-                        <td>nva@gmail.com</td>
-                        <td>2345</td>
-                        <td>28 NTP</td>
-                        <td>0</td>
-                        <td>
-                            <button type="button" class="btn btn-ouline-secondary">Edit</button>
-                        </td>
-                    </tr> -->
                 </tbody>
             </table>
         </div>
 
     </div>
 
+    <!-- Modal Update -->
+    <div class="modal fade" id="mdUpdate" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Modal update</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="frmUpdate">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <input type="hidden" id="customerIdUp">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullNameUp" class="form-control">
+                        </div>
+                        <div class="col-lg-6">
+                            <label for="email">Email</label>
+                            <input type="email" id="emailUp" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phoneUp" class="form-control">
+                        </div>
+                        <div class="col-lg-6">
+                            <label for="address">Address</label>
+                            <input type="text" id="addressUp" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="btnUpdate" class="btn btn-outline-primary">Update</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
     <script src="/assets/js/jquery-3.6.0.min.js"></script>
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/sweetalert/v2/sweetalert2.min.js"></script>
     <script src="/assets/js/app.js"></script>
 
     <script>
@@ -100,7 +132,7 @@
             .done((data) => {
                 $.each(data, (i, item) => {
                     let str = `
-                        <tr>
+                        <tr id="tr_${item.id}">
                             <td>${item.id}</td>
                             <td>${item.fullName}</td>
                             <td>${item.email}</td>
@@ -108,14 +140,32 @@
                             <td>${item.address}</td>
                             <td>${item.balance}</td>
                             <td>
-                                <button type="button" class="btn btn-ouline-secondary">Edit</button>
+                                <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
+                            </td>
+                            <td>
+                                <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
                             </td>
                         </tr>
                     `;
 
                     $('#tbCustomer tbody').prepend(str);
                 });
+
+                handleGroupShowModal();
             })
+        }
+
+        function getCustomerById(customerId) {
+            return $.ajax({
+                "type": "GET",
+                "url": "http://localhost:3000/customers/" + customerId
+            })
+            .done((data) => {
+                customer = data;
+            })
+            .fail((error) => {
+                App.SweetAlert.showAlertError('Invalid ID customer');
+            }) 
         }
 
         loadCustomers();
@@ -140,7 +190,7 @@
             .done((item) => {
 
                 let str = `
-                    <tr>
+                    <tr id="tr_${item.id}">
                         <td>${item.id}</td>
                         <td>${item.fullName}</td>
                         <td>${item.email}</td>
@@ -148,33 +198,138 @@
                         <td>${item.address}</td>
                         <td>${item.balance}</td>
                         <td>
-                            <button type="button" class="btn btn-ouline-secondary">Edit</button>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
+                        </td>
+                        <td>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
                         </td>
                     </tr>
                 `;
 
                 $('#tbCustomer tbody').prepend(str);
+
+                unbindAll();
+                handleGroupShowModal();
+
+                App.SweetAlert.showAlertSuccess('Create customer success');
             })
-
-            // let str = `
-            //     <tr>
-            //         <td>${id}</td>
-            //         <td>${fullName}</td>
-            //         <td>${email}</td>
-            //         <td>${phone}</td>
-            //         <td>${address}</td>
-            //         <td>${balance}</td>
-            //         <td>
-            //             <button type="button" class="btn btn-ouline-secondary">Edit</button>
-            //         </td>
-            //     </tr>
-            // `;
-
-            // $('#tbCustomer tbody').prepend(str);
-
-            // id++;
-
+            .fail((error) => {
+                App.SweetAlert.showAlertError('Create customer fail');
+            })
         });
+
+        $('#btnUpdate').on('click', () => {
+
+            customer.id = $('#customerIdUp').val()
+            customer.fullName = $('#fullNameUp').val();
+            customer.email = $('#emailUp').val();
+            customer.phone = $('#phoneUp').val();
+            customer.address = $('#addressUp').val();
+
+            $.ajax({
+                "type": "PUT",
+                "url": "http://localhost:3000/customers/" + customer.id,
+                "data": customer
+            })
+            .done((item) => {
+                let currentRow = $('#tr_' + item.id);
+
+                let updateRow = `
+                    <tr id="tr_${item.id}">
+                        <td>${item.id}</td>
+                        <td>${item.fullName}</td>
+                        <td>${item.email}</td>
+                        <td>${item.phone}</td>
+                        <td>${item.address}</td>
+                        <td>${item.balance}</td>
+                        <td>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
+                        </td>
+                        <td>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
+                        </td>
+                    </tr>
+                `;
+
+                currentRow.replaceWith(updateRow);
+
+                $('#mdUpdate').modal('hide');
+
+                App.SweetAlert.showAlertSuccess('Update customer information success');
+
+                unbindAll();
+                handleGroupShowModal();
+            })
+            .fail((error) => {
+                App.SweetAlert.showAlertError('Update customer information fail');
+            })
+        })
+
+        function handleGroupShowModal() {
+            handleShowUpdateModal();
+            handleConfirmDelete();
+        }
+
+        function handleShowUpdateModal() {
+            $('.edit').on('click', function () {
+                let id = $(this).data('id');
+
+                $.ajax({
+                    "type": "GET",
+                    "url": "http://localhost:3000/customers/" + id
+                })
+                .done((data) => {
+                    $('#customerIdUp').val(data.id);
+                    $('#fullNameUp').val(data.fullName);
+                    $('#emailUp').val(data.email);
+                    $('#phoneUp').val(data.phone);
+                    $('#addressUp').val(data.address);
+
+                    $('#mdUpdate').modal('show');
+                })
+                .fail((error) => {
+                    App.SweetAlert.showAlertError('Invalid ID customer');
+                })                
+            });
+        }
+
+        function handleConfirmDelete() {
+            $('.deactive').on('click', function () {
+
+                let customerId = $(this).data('id');
+
+                App.SweetAlert.showConfirmDelete()
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        getCustomerById(customerId).then(() => {
+                            doDeactive(customerId);
+                        })
+                    }
+                })
+            })
+        }
+
+        function doDeactive(customerId) {
+            $.ajax({
+                "type": "PUT",
+                "url": "http://localhost:3000/customers/" + customerId,
+                "data": customer
+            })
+            .done((data) => {
+                $('#tr_' + customerId).remove();
+
+                App.SweetAlert.showAlertSuccess('The customer has been deactived');
+            })
+            .fail((error) => {
+                App.SweetAlert.showAlertError('Deactive customer fail');
+            });
+        }
+
+        function unbindAll() {
+            $('.edit').off();
+            $('.deactive').off();
+        }
+
     </script>
 </body>
 </html>
