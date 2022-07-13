@@ -7,6 +7,7 @@
     <title>Index</title>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/sweetalert/v2/sweetalert2.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
     <div class="container">
@@ -42,7 +43,7 @@
             </div>
         </form>
 
-        <div>
+        <div class="mt-3">
             <table class="table table-hover" id="tbCustomer">
                 <thead>
                     <tr>
@@ -52,7 +53,7 @@
                         <th>Phone</th>
                         <th>Address</th>
                         <th>Balance</th>
-                        <th class="text-center" colspan="2">Action</th>
+                        <th class="text-center" colspan="3">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,7 +104,51 @@
         </div>
     </div>
 
+    <!-- Modal Deposit -->
+    <div class="modal fade" id="mdDeposit" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">Modal deposit</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert-danger hide"></div>
+
+                <form id="frmDeposit">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <input type="hidden" id="customerIdDep">
+                            <label for="fullNameDep">Full Name</label>
+                            <input type="text" id="fullNameDep" class="form-control" readonly>
+                        </div>
+                        <div class="col-lg-6">
+                            <label for="emailDep">Email</label>
+                            <input type="email" id="emailDep" name="emailDep" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            <label for="balanceDep">Balance</label>
+                            <input type="text" id="balanceDep" class="form-control" readonly>
+                        </div>
+                        <div class="col-lg-6">
+                            <label for="transactionAmountDep">Transaction amount</label>
+                            <input type="text" id="transactionAmountDep" name="transactionAmountDep" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="btnDeposit" class="btn btn-outline-success">Deposit</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
     <script src="/assets/js/jquery-3.6.0.min.js"></script>
+    <script src="/assets/js/jquery.validate.min.js"></script>
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/sweetalert/v2/sweetalert2.min.js"></script>
     <script src="/assets/js/app.js"></script>
@@ -113,6 +158,11 @@
         let customers = [];
 
         let customer = new Customer();
+
+        let sender = new Sender();
+        let recipient = new Recipient();
+
+        let deposit = new Deposit();
 
         customer.id = 1;
         customer.fullName = 'NVA';
@@ -141,6 +191,9 @@
                             <td>${item.balance}</td>
                             <td>
                                 <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
+                            </td>
+                            <td>
+                                <button type="button" data-id="${item.id}" class="btn btn-outline-success deposit">Deposit</button>
                             </td>
                             <td>
                                 <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
@@ -201,6 +254,9 @@
                             <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
                         </td>
                         <td>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-success deposit">Deposit</button>
+                        </td>
+                        <td>
                             <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
                         </td>
                     </tr>
@@ -217,6 +273,10 @@
                 App.SweetAlert.showAlertError('Create customer fail');
             })
         });
+
+        $('#btnDeposit').on('click', () => {
+            $('#frmDeposit').submit();
+        })
 
         $('#btnUpdate').on('click', () => {
 
@@ -246,6 +306,9 @@
                             <button type="button" data-id="${item.id}" class="btn btn-outline-secondary edit">Edit</button>
                         </td>
                         <td>
+                            <button type="button" data-id="${item.id}" class="btn btn-outline-success deposit">Deposit</button>
+                        </td>
+                        <td>
                             <button type="button" data-id="${item.id}" class="btn btn-outline-danger deactive">Deactive</button>
                         </td>
                     </tr>
@@ -265,8 +328,36 @@
             })
         })
 
+
+        function doDeposit() {
+            let transactionAmount = +$('#transactionAmountDep').val();
+
+            delete deposit.id;
+            deposit.customerId = customer.id;
+            deposit.transactionAmount = transactionAmount;
+            deposit.createdAt = new Date();
+            deposit.createdBy = 1;
+            deposit.updatedAt = new Date();
+            deposit.updatedBy = 1;
+            deposit.deleted = 0;
+
+            $.ajax({
+                "type": "POST",
+                "url": "http://localhost:3000/deposits",
+                "data": deposit
+            })
+            .done((item) => {
+                console.log(item);
+                
+            })
+            .fail((error) => {
+                App.SweetAlert.showAlertError('Deposit fail');
+            })
+        }
+
         function handleGroupShowModal() {
             handleShowUpdateModal();
+            handleShowDepositModal();
             handleConfirmDelete();
         }
 
@@ -286,6 +377,29 @@
                     $('#addressUp').val(data.address);
 
                     $('#mdUpdate').modal('show');
+                })
+                .fail((error) => {
+                    App.SweetAlert.showAlertError('Invalid ID customer');
+                })                
+            });
+        }
+
+        function handleShowDepositModal() {
+            $('.deposit').on('click', function () {
+                let id = $(this).data('id');
+
+                $.ajax({
+                    "type": "GET",
+                    "url": "http://localhost:3000/customers/" + id
+                })
+                .done((data) => {
+                    customer = data;
+                    $('#customerIdDep').val(data.id);
+                    $('#fullNameDep').val(data.fullName);
+                    $('#emailDep').val(data.email);
+                    $('#balanceDep').val(data.balance);
+
+                    $('#mdDeposit').modal('show');
                 })
                 .fail((error) => {
                     App.SweetAlert.showAlertError('Invalid ID customer');
@@ -327,8 +441,55 @@
 
         function unbindAll() {
             $('.edit').off();
+            $('.deposit').off();
             $('.deactive').off();
         }
+
+
+        $('#frmDeposit').validate({
+            rules: {
+                emailDep: {
+                    required: true,
+                    // email: true
+                    isEmail: true
+                },
+                transactionAmountDep: {
+                    required: true,
+                    // number: true,
+                    isNumberWithSpace: true
+                }
+            },
+            messages: {
+                emailDep: {
+                    required: "Vui lòng nhập email",
+                    // email: "Nhập đúng định dạng email"
+                },
+                transactionAmountDep: {
+                    required: "Vui lòng nhập tiền giao dịch",
+                    // number: "Vui lòng chỉ nhập số"
+                }
+            },
+            errorLabelContainer: "#mdDeposit .modal-alert-danger",
+            errorPlacement: function (error, element) {
+                error.appendTo("#mdDeposit .modal-alert-danger");
+            },
+            showErrors: function(errorMap, errorList) {
+                if (this.numberOfInvalids() > 0) {
+                    $("#mdDeposit .modal-alert-danger").removeClass("hide").addClass("show");
+                } else {
+                    $("#mdDeposit .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                    $("#frmDeposit input.error").removeClass("error");
+                }
+                this.defaultShowErrors();
+            },
+            submitHandler: function () {
+                doDeposit();
+            }
+        });
+
+        $.validator.addMethod("isNumberWithSpace", function (value, element) {
+            return this.optional(element) || /^\s*[0-9,\s]+\s*$/i.test(value);
+        }, "Vui lòng nhập giá trị số");
 
     </script>
 </body>

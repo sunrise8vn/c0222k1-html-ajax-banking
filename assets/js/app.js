@@ -49,6 +49,18 @@ class Customer {
     }
 }
 
+class Sender extends Customer {
+    constructor() {
+        super();
+    }
+}
+
+class Recipient extends Customer {
+    constructor() {
+        super();
+    }
+}
+
 class Deposit {
     constructor(id, customerId, transactionAmount, createdAt, createdBy, updatedAT, updatedBy, deleted) {
         this.id = id;

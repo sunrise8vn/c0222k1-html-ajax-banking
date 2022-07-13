@@ -39,6 +39,10 @@ table tbody tr:hover {
     border-color: #f5c2c7;
 }
 
+.modal-alert-danger ul {
+    margin-bottom: 0;
+}
+
 .show {
     display: block !important;
 }
